@@ -14,7 +14,6 @@ const createItemCard = item => {
     $itemCard.setAttribute('href', `../html/product.html?id=${item._id}`)
     const $itemCardArt = createItemCardArt(item)
     $itemCard.appendChild($itemCardArt)
-    
     return $itemCard
 } 
 
@@ -32,7 +31,6 @@ const createItemCardArt = item => {
 
     return $itemCardArt
 } 
-
 
 // Create variables to get img, name and description
 const createItemCardImg = item => {
@@ -62,9 +60,9 @@ const createItemCardDesc = item => {
 }
 
 
-
 // Loop for used to create item card from the get request
 const main = async () => {
+
     const itemsData = await retrieveItemsData()
 
     for (let i = 0; i < itemsData.length; i++) {
@@ -72,6 +70,7 @@ const main = async () => {
             $items.appendChild(createItemCard(itemsData[i]))
         }
     }
+
 }
 
 main()
