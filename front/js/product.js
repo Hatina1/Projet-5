@@ -11,6 +11,25 @@ const $itemDescription = document.querySelector('#description')
 const $itemColors = document.querySelector('#colors')
 const $itemQty = document.querySelector('#quantity')
 const $addToCartButton = document.querySelector('#addToCart')
+const $addToCartDiv = document.querySelector('.item__content__addButton')
+const $linkCart = document.querySelector('ul > a:nth-child(2) > li')
+const $divQtySelection = document.querySelector('.item__content__settings__quantity')
+const $divColorSelection = document.querySelector('.item__content__settings__color')
+
+const $colorVal = document.createElement("input")
+$colorVal.setAttribute('type', "color")
+$colorVal.setAttribute('name', 'color-select')
+$colorVal.setAttribute('value','#ffffff')
+$divColorSelection.appendChild($colorVal)
+
+// Number products in cart 
+const $itemsNumber = JSON.parse(localStorage.getItem("cart")).length
+if (localStorage.hasOwnProperty('cart') && $itemsNumber >= 1 ) {
+    const $cartNumItems = document.createElement("span")
+    $linkCart.appendChild($cartNumItems)
+    $cartNumItems.textContent = `${$itemsNumber}`
+} 
+
 
 // Fetch request to get product items
 const retrieveItemsData = () => fetch(`http://localhost:3000/api/products/${$productId}`)
@@ -29,6 +48,26 @@ const createItemImg = item => {
     return $itemImg
 }
 
+let $colorPalette = [
+
+    {color: "Blue", value : "#1F85DE"},
+    {color: "White", value : "#ffffff"},
+    {color: "Black", value : "#000000"},
+    {color: "Black/Yellow", value : "#F4CC0F"},
+    {color: "Black/Red", value : "#B53000"},
+    {color: "Green", value : "#6A9828"},
+    {color: "Red", value : "#F4460F"},
+    {color: "Orange", value : "#F48512"},
+    {color: "Pink", value : "#DAC0E4"},
+    {color: "Grey", value : "#5A555C"},
+    {color: "Purple", value : "#B079C4"},
+    {color: "Navy", value : "#2E2295"},
+    {color: "Silver", value : "#67676B"},
+    {color: "Brown", value : "#7A514B"},
+    {color: "Yellow", value : "#F8EC3D"}
+    
+]
+
 
 const fillItemTable = itemsData => {
 
@@ -39,14 +78,43 @@ const fillItemTable = itemsData => {
     $itemDescription.textContent = itemsData.description
 
     const values = itemsData.colors
-
     for (const value of values) {
         var option = document.createElement("option")
         option.value = value
-        option.text = value.charAt(0).toUpperCase() + value.slice(1)
+        option.text = value
         $itemColors.appendChild(option)
     }
 
+}
+
+
+const createQtyMsg = () => {
+
+    //let checkMsgAlready = $divQtySelection.contains(span)
+    let checkMsgAlready = $divQtySelection.textContent.includes("Quantité prise en compte !")
+    if (!checkMsgAlready) {
+        const $qtyMsg = document.createElement('span')
+        $qtyMsg.textContent = "  Quantité prise en compte !"
+
+        $divQtySelection.appendChild($qtyMsg)
+        return $qtyMsg
+    }
+    
+}
+
+const addProductMsg = () => {
+
+        const $addMsg = document.createElement('div')
+        $addMsg.className = "addProductAnim"
+        $addMsg.textContent = "Article ajouté!"
+        //$addMsg.top = `${e.offsetY-100}px`
+        //$addMsg.left = `${e.offsetX}px`
+        $addToCartDiv.appendChild($addMsg)
+
+        setTimeout(() => {
+            $addMsg.remove()
+            //location.reload()
+        }, 2500)
 }
 
 
@@ -65,92 +133,82 @@ main()
 
 
 // Create variable of the product to be add in the cart
-let productToAddCart = new Object()
+let productToCart = new Object()
 
-productToAddCart.id = $productId
+productToCart.id = $productId
 
 $itemQty.addEventListener('change', (e) => {
-    productToAddCart.quantity =  parseInt(e.target.value)
+    productToCart.quantity =  parseInt(e.target.value)
+    createQtyMsg()
 })
 
 $itemColors.addEventListener('change', (e) => {
-    productToAddCart.color =  e.target.value
+    productToCart.color =  e.target.value
+    let $colorName = $colorPalette.filter(col => col.color == e.target.value)
+    $colorVal.setAttribute('value',`${$colorName[0].value}`)
 })
 
-
-
-// Initialise the cart if the cart array doesn't already exists
-let cartAllProducts = []
-
+let cartProducts = []
+    
 if (localStorage.hasOwnProperty('cart')) {
 
-     cartAllProducts = JSON.parse(localStorage.getItem('cart'))
-
-} 
-
+    cartProducts = JSON.parse(localStorage.getItem('cart'))
+   
+}
 
 // Check the presence of the product in the array 
-const checkColorAndIdPresence = (cart, productToAdd) => {
+const checkColorAndIdPresence = (cart, product) => {
 
     let checkCartIdColor = []
-    
-    checkCartIdColor = cart.map(product => [product.id,product.color].join(" ")).filter(item => (item == productToAdd.id + " " + productToAdd.color))
+   
+    checkCartIdColor = cart.map(product => [product.id,product.color].join(" ")).filter(item => (item == (product.id + " " + product.color)))
     return checkCartIdColor
 }
 
-const checkIdPresence = (cart, productToAdd) => {
+const checkIdPresence = (cart, product) => {
 
     let checkCartIdPr = []
     
-    checkCartIdPr = cart.map(product => product.id).filter(item => (item == productToAdd.id))
+    checkCartIdPr = cart.map(product => product.id).filter(item => (item == product.id))
     return checkCartIdPr
 }
 
-const productPosition = (cart, productToAdd) => {
+const productPosition = (cart, product) => {
 
     let productPos = 0
-    console.log("paire id color :" + cart.map(product => [product.id,product.color].join(" ")))
-    console.log("index :" + productToAdd.id + " " + productToAdd.color)
-    productPos = cart.map(product => [product.id,product.color].join(" ")).indexOf(productToAdd.id + " " + productToAdd.color)
+    productPos = cart.map(product => [product.id,product.color].join(" ")).indexOf(product.id + " " + product.color)
     return productPos
 }
 
-const sameIdColor = (cart, productToAdd) => {
 
-    let sameProduct = []
-
-    sameProduct = cart.filter(item => item.id == productToAdd.id).filter(item => item.color == productToAdd.color)
-
-}
-
-
-
-
-const checkCart = (cart,productToAdd) => {
+const addProduct = (cart,product) => {
     
     let checkCartIdColor = []
-    checkCartIdColor = checkColorAndIdPresence(cart, productToAdd)
+    checkCartIdColor = checkColorAndIdPresence(cart, product)
 
     let checkCartId = []
-    checkCartId = checkIdPresence(cart, productToAdd)
-
-    let pos = productPosition(cart, productToAdd)
-    console.log("la val de pos :" + pos)
+    checkCartId = checkIdPresence(cart, product)
 
     if (cart.length === 0){
-        console.log("le panier etait vide")
-        cart.push(productToAdd) 
+        cart.push(product) 
         
     } else if (checkCartId && checkCartId.length && checkCartIdColor && checkCartIdColor.length)  {
-        console.log("meme produit")
-        console.log("la qté dans le panier :" + cart[pos].quantity)
-        console.log("la qté dans l'article :" + productToAdd.quantity)
-        cart[pos].quantity += productToAdd.quantity
+        let pos = productPosition(cart, product)
+        cart[pos].quantity += product.quantity
         
     } else {
-        console.log("produit ou couleur differente")
-        cart.push(productToAdd)
+        cart.push(product)
     }
+
+    cart.sort(function(a, b) {
+        if (a.id > b.id) {
+          return 1;
+        }
+        if (a.id < b.id) {
+          return -1;
+        }
+        return 0;
+    })
 
     return cart
 }
@@ -158,16 +216,16 @@ const checkCart = (cart,productToAdd) => {
 
 $addToCartButton.addEventListener('click', () => {
     
-    // e.preventDefault()
+    // Initialise the cart if the cart array doesn't already exists
+
     
-    const updatedCart = checkCart(cartAllProducts, productToAddCart)
-     
+    const updatedCart = addProduct(cartProducts, productToCart)
     localStorage.setItem('cart', JSON.stringify(updatedCart))
-     
+
+    addProductMsg()
+    cartProducts= []
 })
 
     
 
-
-//JSON.parse(localStorage.getItem(updatedCart))
 

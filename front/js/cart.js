@@ -13,6 +13,35 @@ const euro = new Intl.NumberFormat('fr-FR', {
     minimumFractionDigits: 2
   })
 
+let $colorPalette = [
+
+{color: "Blue", value : "#1F85DE"},
+{color: "White", value : "#ffffff"},
+{color: "Black", value : "#000000"},
+{color: "Black/Yellow", value : "#F4CC0F"},
+{color: "Black/Red", value : "#B53000"},
+{color: "Green", value : "#6A9828"},
+{color: "Red", value : "#F4460F"},
+{color: "Orange", value : "#F48512"},
+{color: "Pink", value : "#DAC0E4"},
+{color: "Grey", value : "#5A555C"},
+{color: "Purple", value : "#B079C4"},
+{color: "Navy", value : "#2E2295"},
+{color: "Silver", value : "#67676B"},
+{color: "Brown", value : "#7A514B"},
+{color: "Yellow", value : "#F8EC3D"}
+
+]
+// Number products in cart 
+const $linkCart = document.querySelector('ul > a:nth-child(2) > li')
+const $itemsNumber = JSON.parse(localStorage.getItem("cart")).length
+if (localStorage.hasOwnProperty('cart') && $itemsNumber >= 1 ) {
+    const $cartNumItems = document.createElement("span")
+    $linkCart.appendChild($cartNumItems)
+    $cartNumItems.textContent = `${$itemsNumber}`
+} 
+
+
 // Fetch request to get product items
 const retrieveItemsData = () => fetch("http://localhost:3000/api/products")
     .then(res => res.json())
@@ -83,14 +112,24 @@ const createDivContentDesc= (itemDataElem, item) => {
         $itemName.textContent = `${itemDataElem.name}`
 
         const $itemColor = document.createElement('p')
-        $itemColor.textContent = `${item.color}`
+        $itemColor.textContent = `${item.color} `
+        $itemColor.style.display = "inline"
+
+        const $colorVal = document.createElement("input")
+        $colorVal.setAttribute('type', "color")
+        $colorVal.setAttribute('name', 'color-select')
+        let $colorName = $colorPalette.filter(col => col.color == `${item.color}`)
+        $colorVal.setAttribute('value',`${$colorName[0].value}`)
+        
 
         const $itemPrice = document.createElement('p')
         $itemPrice.textContent = `${euro.format(itemDataElem.price)}`
 
         $itemDivContentDesc.appendChild($itemName)
         $itemDivContentDesc.appendChild($itemColor)
+        $itemDivContentDesc.appendChild($colorVal)
         $itemDivContentDesc.appendChild($itemPrice)
+        
 
     return $itemDivContentDesc
 }
@@ -136,7 +175,20 @@ const createDivContentSettings= item => {
     return $itemDivContentSet
 }
 
-const calculateTotal = (itemsData, item) => {
+
+
+// Main function with for each loop to retrieve data and create articles
+const main = async () => {
+
+    const itemsData = await retrieveItemsData()
+   
+    $itemsLocalSt.forEach(elem => $cartItems.appendChild(createCart(itemsData, elem)))
+
+}
+
+main()
+
+const calculateItem = (itemsData, item) => {
 
     let $prod = item.id
     let $itemElem = itemsData.find(elem => elem._id === $prod)
@@ -153,37 +205,33 @@ const calculateTotal = (itemsData, item) => {
 
 } 
 
-// Main function with for each loop to retrieve data and create articles
-const main = async () => {
+const calculateTotal = async () => {
 
     const itemsData = await retrieveItemsData()
-   
-    $itemsLocalSt.forEach(elem => $cartItems.appendChild(createCart(itemsData, elem)))
 
     const $totalQtyAmount = []
-    for (let i = 0; i < $itemsLocalSt.length; i++) {
-        if ($itemsLocalSt[i]) {
-            const $amountQtyTable =  calculateTotal(itemsData, $itemsLocalSt[i])
-            $totalQtyAmount.push($amountQtyTable)
+        for (let i = 0; i < $itemsLocalSt.length; i++) {
+            if ($itemsLocalSt[i]) {
+                const $amountQtyTable =  calculateItem(itemsData, $itemsLocalSt[i])
+                $totalQtyAmount.push($amountQtyTable)
+            }
         }
-    }
 
-    var $totalQ = $totalQtyAmount.reduce(function (accumulator, item) {
-        return accumulator + item.quantity;
-      }, 0)
+        var $totalQ = $totalQtyAmount.reduce(function (accumulator, item) {
+            return accumulator + item.quantity;
+        }, 0)
 
-    var $totalA = $totalQtyAmount.reduce(function (accumulator, item) {
-    return accumulator + item.amount;
-    }, 0)
+        var $totalA = $totalQtyAmount.reduce(function (accumulator, item) {
+        return accumulator + item.amount;
+        }, 0)
 
-    $totalQty.textContent = `${$totalQ}`
-    $totalAmount.textContent = `${euro.format($totalA)}`
+        $totalQty.textContent = `${$totalQ}`
+        $totalAmount.textContent = `${euro.format($totalA)}`
+
 
     
 }
-
-main()
-
+calculateTotal()
 
 
 
@@ -202,8 +250,6 @@ const modifyQty = (cart, id, color, qtyValue) => {
     return cart
 } 
 
-
-
 document.addEventListener('change',function(e){
     if(e.target && e.target.className== 'itemQuantity'){
 
@@ -216,9 +262,11 @@ document.addEventListener('change',function(e){
         const updatedQtyCart =  modifyQty($itemsLocalSt, $idItemToModify, $colorItemToModify, $newQty)
 
         localStorage.setItem('cart', JSON.stringify(updatedQtyCart))
+
+        //location.reload()
+        calculateTotal()
      }
 })
-
 
 
 
@@ -234,7 +282,6 @@ const deleteItem = (cart, id, color) => {
 
 } 
 
-
 document.addEventListener('click',function(e){
     if(e.target && e.target.className== 'delete__item'){
 
@@ -245,13 +292,12 @@ document.addEventListener('click',function(e){
 
         localStorage.setItem('cart', JSON.stringify(updatedCartAfterDelete))
         e.target.closest("article").remove()
+
+        location.reload()
     }
 })
 
 
-
-
-////////////////////////////////////////////////////////////////////////////////
 
 
 // Contact details info to be collected
@@ -273,50 +319,104 @@ const $cityErrorMsg = document.querySelector('#cityErrorMsg')
 const $emailErrorMsg = document.querySelector('#emailErrorMsg')
 
 
-// check inputs and show error messages
-const handleErrorMsg = contact => {
-
-    if (contact.$firstName != "Hata") {
-        $firstNameErrorMsg.textContent = "Le prénom doit contenir au moins deux lettre et une majuscule"
-
-        $lastNameErrorMsg.textContent = "Le prénom doit contenir au moins deux lettre et une majuscule"
-
-        $addressErrorMsg.textContent = "Numéro, type de voie et nom de la voie"
-
-        $cityErrorMsg.textContent = "Ville"
-
-        $emailErrorMsg.textContent = "Format requis : aaaa@xxxx.com"
-    }
-}
-
-// data to retrieve from the form
-let $contact = new Object()
-
-$firstName.addEventListener('change', (e) => {
-    $contact.firstName =  e.target.value
-})
-console.log("contacts:" + $contact)
-
-$lastName.addEventListener('change', (e) => {
-    $contact.lastName =  e.target.value
-})
-$address.addEventListener('change', (e) => {
-    $contact.address =  e.target.value
-})
-$city.addEventListener('change', (e) => {
-    $contact.city =  e.target.value
-})
-$email.addEventListener('change', (e) => {
-    $contact.email =  e.target.value
-})
-console.log("contacts:" + $contact)
 
 let $products = []
 $products = $itemsLocalSt.map(elem => elem.id)
 
+
+// data to retrieve from the form
+let $contact = new Object()
+
+let $regName = /^[A-Z]\D{2,}/
+let $regAddress = /^\d+\D+\d{5}$/g
+let $regCity = /^[A-Z]\D{2,}/
+let $regEmail = /\D+@\D+.{2,}/
+
+
+$firstName.addEventListener('change', (e) => {
+    $contact.firstName =  e.target.value
+
+    if ($regName.test($contact.firstName) == false) {
+        $firstNameErrorMsg.textContent = "Le prénom doit commencer par une majuscule et contenir au moins deux lettres"
+    } else{
+        $firstNameErrorMsg.textContent = ""
+    }
+})
+
+$lastName.addEventListener('change', (e) => {
+    $contact.lastName =  e.target.value
+
+    if ($regName.test($contact.lastName) == false) {
+        $lastNameErrorMsg.textContent = "Le nom doit commencer par une majuscule et contenir au moins deux lettres"
+    } else{
+        $lastNameErrorMsg.textContent = ""
+    }
+})
+
+$address.addEventListener('change', (e) => {
+    $contact.address =  e.target.value
+
+    if ($regAddress.test($contact.address) == false) {
+        $addressErrorMsg.textContent = "Format requis ex: 20 rue de la paix 75002"
+    } else{
+        $addressErrorMsg.textContent = ""
+    }
+})
+
+$city.addEventListener('change', (e) => {
+    $contact.city =  e.target.value
+
+    if ($regCity.test($contact.city) == false) {
+        $cityErrorMsg.textContent = "Le nom de la ville doit commencer par une majuscule et contenir au moins deux lettres"
+    } else{
+        $cityErrorMsg.textContent = ""
+    }
+})
+
+$email.addEventListener('change', (e) => {
+    $contact.email =  e.target.value
+
+    if ($regEmail.test($contact.email)  == false) {
+        $emailErrorMsg.textContent = "Format requis : aaaa@xxxx.com"
+    } else{
+        $emailErrorMsg.textContent = ""
+    }
+})
+
+
+
+
 let orderDetails = new Object()
 orderDetails.contact = $contact
 orderDetails.products = $products
+
+// check inputs and show error messages
+
+const inputCheck = elem => {
+
+    if (elem.textContent == "") {
+        return true
+    } else {
+        return false
+    }
+
+}
+
+const handleErrorMsg = contact => {
+
+    let $checkFirstName = inputCheck($firstNameErrorMsg)
+    let $checkLastName = inputCheck($lastNameErrorMsg)
+    let $checkAddress = inputCheck($addressErrorMsg)
+    let $checkCity = inputCheck($cityErrorMsg) 
+    let $checkEmail = inputCheck($emailErrorMsg) 
+
+    if ( $checkFirstName && $checkLastName && $checkAddress && $checkCity && $checkEmail) {
+        return true
+    } else {
+        return false
+    }
+
+}
 
 
 // Fetch request to get product items
@@ -331,30 +431,29 @@ fetch("http://localhost:3000/api/products/order", {
 })
 .then(res => res.json())
 .catch(err => console.log("What's happening ?", err))
-//.then(response => success(response))
 
 
 // method for retrieve form details and check contact details correctness
 const cartOrderSubmit = async () => {
 
-    const $formDetails = await retrieveForm()
+    if(handleErrorMsg($contact)){
 
-    // const $contactDetails = $formDetails.contact
-    //handleErrorMsg($contactDetails)
+        const $formDetails = await retrieveForm()
 
-    const $orderNum = $formDetails.orderId
-    window.location.href= `../html/confirmation.html?order=${$orderNum}`
+        const $orderNum = $formDetails.orderId
+        window.location.href= `../html/confirmation.html?order=${$orderNum}`
 
+    } else {
+        alert ("Certaines données n'ont pas le format approprié")
+    }
 }
-
 
 document.addEventListener('click',function(e){
     if(e.target && e.target.id== 'order'){
 
         e.preventDefault()
 
-        const $orderId = cartOrderSubmit()
-        console.log($orderId)
+        cartOrderSubmit($contact)
 
      }
 })

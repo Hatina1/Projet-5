@@ -104,6 +104,21 @@ h2 {
 	font-weight: 600;
 	color: #3498db !important;
 }
+/*ajout*/
+.menu nav ul li span {
+	display: inline-block;
+	width: 15px;
+    height: 15px;
+    line-height: 15px;
+	text-align: center;
+    padding: 5px;
+	border-radius: 50%;
+	font-weight: 600;
+	margin-left: 10px;
+	color: white;
+	border: 1px solid #3498db;
+	background-color:#3498db;
+}
 
 /*banniere*/
 .banniere {
