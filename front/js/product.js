@@ -12,7 +12,6 @@ const $itemColors = document.querySelector('#colors')
 const $itemQty = document.querySelector('#quantity')
 const $addToCartButton = document.querySelector('#addToCart')
 const $addToCartDiv = document.querySelector('.item__content__addButton')
-const $linkCart = document.querySelector('ul > a:nth-child(2) > li')
 const $divQtySelection = document.querySelector('.item__content__settings__quantity')
 const $divColorSelection = document.querySelector('.item__content__settings__color')
 
@@ -22,13 +21,28 @@ $colorVal.setAttribute('name', 'color-select')
 $colorVal.setAttribute('value','#ffffff')
 $divColorSelection.appendChild($colorVal)
 
-// Number products in cart 
-const $itemsNumber = JSON.parse(localStorage.getItem("cart")).length
-if (localStorage.hasOwnProperty('cart') && $itemsNumber >= 1 ) {
-    const $cartNumItems = document.createElement("span")
-    $linkCart.appendChild($cartNumItems)
-    $cartNumItems.textContent = `${$itemsNumber}`
-} 
+// Show number of products in cart
+const $linkCart = document.querySelector('ul > a:nth-child(2) > li')
+
+const  showItemsQtyInCart = () => {
+
+   const $itemsNumber = JSON.parse(localStorage.getItem("cart")).length 
+
+   var span = document.querySelector("span")
+   var classes = span.classList
+   var $checkcartNumItems = classes.contains('itemsQtyInCart')
+
+   if ($checkcartNumItems) {
+       const $cartNumItemsModif = document.querySelector('.itemsQtyInCart')
+       $cartNumItemsModif.textContent = `${$itemsNumber}`
+
+   } else if (localStorage.hasOwnProperty('cart') && $itemsNumber >= 1 ) {
+       const $cartNumItems = document.createElement("span")
+       $cartNumItems.classList.add('itemsQtyInCart')
+       $linkCart.appendChild($cartNumItems)
+       $cartNumItems.textContent = `${$itemsNumber}`
+   } 
+}
 
 
 // Fetch request to get product items
@@ -107,13 +121,10 @@ const addProductMsg = () => {
         const $addMsg = document.createElement('div')
         $addMsg.className = "addProductAnim"
         $addMsg.textContent = "Article ajouté!"
-        //$addMsg.top = `${e.offsetY-100}px`
-        //$addMsg.left = `${e.offsetX}px`
         $addToCartDiv.appendChild($addMsg)
 
         setTimeout(() => {
             $addMsg.remove()
-            //location.reload()
         }, 2500)
 }
 
@@ -130,6 +141,7 @@ const main = async () => {
 }
 
 main()
+showItemsQtyInCart()
 
 
 // Create variable of the product to be add in the cart
@@ -139,7 +151,7 @@ productToCart.id = $productId
 
 $itemQty.addEventListener('change', (e) => {
     productToCart.quantity =  parseInt(e.target.value)
-    createQtyMsg()
+    //createQtyMsg()
 })
 
 $itemColors.addEventListener('change', (e) => {
@@ -148,13 +160,6 @@ $itemColors.addEventListener('change', (e) => {
     $colorVal.setAttribute('value',`${$colorName[0].value}`)
 })
 
-let cartProducts = []
-    
-if (localStorage.hasOwnProperty('cart')) {
-
-    cartProducts = JSON.parse(localStorage.getItem('cart'))
-   
-}
 
 // Check the presence of the product in the array 
 const checkColorAndIdPresence = (cart, product) => {
@@ -217,13 +222,25 @@ const addProduct = (cart,product) => {
 $addToCartButton.addEventListener('click', () => {
     
     // Initialise the cart if the cart array doesn't already exists
+    
+    let cartProducts = []
 
     
-    const updatedCart = addProduct(cartProducts, productToCart)
-    localStorage.setItem('cart', JSON.stringify(updatedCart))
+    if (localStorage.hasOwnProperty('cart')) {
+
+        cartProducts = JSON.parse(localStorage.getItem('cart'))
+        const updatedCart = addProduct(cartProducts, productToCart)
+        localStorage.setItem('cart', JSON.stringify(updatedCart))
+    
+    } else {
+        const updatedCart = addProduct(cartProducts, productToCart)
+        localStorage.setItem('cart', JSON.stringify(updatedCart))
+
+    }
 
     addProductMsg()
-    cartProducts= []
+    showItemsQtyInCart()
+
 })
 
     

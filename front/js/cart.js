@@ -32,14 +32,29 @@ let $colorPalette = [
 {color: "Yellow", value : "#F8EC3D"}
 
 ]
-// Number products in cart 
+
 const $linkCart = document.querySelector('ul > a:nth-child(2) > li')
-const $itemsNumber = JSON.parse(localStorage.getItem("cart")).length
-if (localStorage.hasOwnProperty('cart') && $itemsNumber >= 1 ) {
-    const $cartNumItems = document.createElement("span")
-    $linkCart.appendChild($cartNumItems)
-    $cartNumItems.textContent = `${$itemsNumber}`
-} 
+
+ // Show number of products in cart
+const  showItemsQtyInCart = () => {
+
+    const $itemsNumber = JSON.parse(localStorage.getItem("cart")).length 
+ 
+    var span = document.querySelector("span")
+    var classes = span.classList
+    var $checkcartNumItems = classes.contains('itemsQtyInCart')
+
+    if ($checkcartNumItems) {
+        const $cartNumItemsModif = document.querySelector('.itemsQtyInCart')
+        $cartNumItemsModif.textContent = `${$itemsNumber}`
+
+    } else if (localStorage.hasOwnProperty('cart') && $itemsNumber >= 1 ) {
+        const $cartNumItems = document.createElement("span")
+        $cartNumItems.classList.add('itemsQtyInCart')
+        $linkCart.appendChild($cartNumItems)
+        $cartNumItems.textContent = `${$itemsNumber}`
+    } 
+}
 
 
 // Fetch request to get product items
@@ -142,7 +157,8 @@ const createDivContentSettings= item => {
 
         const $itemDivContentSetQty = document.createElement('div')
         $itemDivContentSetQty.classList.add('cart__item__content__settings__quantity')
-        const $itemDivQty = document.createElement('div')
+        //const $itemDivQty = document.createElement('div')
+        //$itemDivQty.classList.add('cart__item__content__settings__quantity__msg')
         
         const $itemQtyLabel = document.createElement('p')
         $itemQtyLabel.textContent = "Qté : "
@@ -150,7 +166,7 @@ const createDivContentSettings= item => {
         const $itemQty = document.createElement('input')
         $itemQty.textContent = parseInt(`${item.quantity}`)
         $itemQty.classList.add('itemQuantity')
-        $itemQty.setAttribute('type', Number)
+        $itemQty.setAttribute('type', "number")
         $itemQty.setAttribute('name', 'itemQuantity')
         $itemQty.setAttribute('min', 1)
         $itemQty.setAttribute('max', 100)
@@ -158,6 +174,7 @@ const createDivContentSettings= item => {
 
         $itemDivContentSetQty.appendChild($itemQtyLabel)
         $itemDivContentSetQty.appendChild($itemQty)
+        //$itemDivContentSetQty.appendChild($itemDivQty)
 
         $itemDivContentSet.appendChild($itemDivContentSetQty)
 
@@ -187,6 +204,7 @@ const main = async () => {
 }
 
 main()
+showItemsQtyInCart()
 
 const calculateItem = (itemsData, item) => {
 
@@ -238,6 +256,18 @@ calculateTotal()
 
 ////////////////////////////////////////////////////////////////////////////////
 
+const createQtyMsg = (divQty) => {
+
+    let checkMsgAlready = divQty.textContent.includes("  Modification prise en compte !")
+    if (!checkMsgAlready) {
+        const $qtyMsg = document.createElement('span')
+        $qtyMsg.textContent = "  Modification prise en compte !"
+
+        divQty.appendChild($qtyMsg)
+        return $qtyMsg
+    }
+    
+}
 
 // Modify quantity function used when quantity is changed
 const modifyQty = (cart, id, color, qtyValue) => {
@@ -255,6 +285,7 @@ document.addEventListener('change',function(e){
 
         let $idItemToModify = e.target.closest("article").dataset.id
         let $colorItemToModify = e.target.closest("article").dataset.color
+        let $itemDivContentSetQty = document.querySelector('.cart__item__content__settings__quantity')
     
         let $newQty = 0
         $newQty =  parseInt(e.target.value)
@@ -263,8 +294,8 @@ document.addEventListener('change',function(e){
 
         localStorage.setItem('cart', JSON.stringify(updatedQtyCart))
 
-        //location.reload()
         calculateTotal()
+        //createQtyMsg($itemDivContentSetQty)
      }
 })
 
@@ -293,7 +324,9 @@ document.addEventListener('click',function(e){
         localStorage.setItem('cart', JSON.stringify(updatedCartAfterDelete))
         e.target.closest("article").remove()
 
-        location.reload()
+        calculateTotal()
+        showItemsQtyInCart()
+        
     }
 })
 
@@ -327,17 +360,18 @@ $products = $itemsLocalSt.map(elem => elem.id)
 // data to retrieve from the form
 let $contact = new Object()
 
-let $regName = /^[A-Z]\D{2,}/
+let $regName = /^[A-Za-z]\D{2,}/
 let $regAddress = /^\d+\D+\d{5}$/g
-let $regCity = /^[A-Z]\D{2,}/
+let $regCity = /^[A-Za-z]\D{2,}/
 let $regEmail = /\D+@\D+.{2,}/
+
 
 
 $firstName.addEventListener('change', (e) => {
     $contact.firstName =  e.target.value
 
     if ($regName.test($contact.firstName) == false) {
-        $firstNameErrorMsg.textContent = "Le prénom doit commencer par une majuscule et contenir au moins deux lettres"
+        $firstNameErrorMsg.textContent = "Le prénom doit contenir au moins deux lettres"
     } else{
         $firstNameErrorMsg.textContent = ""
     }
@@ -347,7 +381,7 @@ $lastName.addEventListener('change', (e) => {
     $contact.lastName =  e.target.value
 
     if ($regName.test($contact.lastName) == false) {
-        $lastNameErrorMsg.textContent = "Le nom doit commencer par une majuscule et contenir au moins deux lettres"
+        $lastNameErrorMsg.textContent = "Le nom doit contenir au moins deux lettres"
     } else{
         $lastNameErrorMsg.textContent = ""
     }
@@ -357,7 +391,7 @@ $address.addEventListener('change', (e) => {
     $contact.address =  e.target.value
 
     if ($regAddress.test($contact.address) == false) {
-        $addressErrorMsg.textContent = "Format requis ex: 20 rue de la paix 75002"
+        $addressErrorMsg.textContent = "Format requis : adresse et code postal. Ex: 20 rue de la paix 75002"
     } else{
         $addressErrorMsg.textContent = ""
     }
@@ -367,7 +401,7 @@ $city.addEventListener('change', (e) => {
     $contact.city =  e.target.value
 
     if ($regCity.test($contact.city) == false) {
-        $cityErrorMsg.textContent = "Le nom de la ville doit commencer par une majuscule et contenir au moins deux lettres"
+        $cityErrorMsg.textContent = "Le nom de la ville doit contenir au moins deux lettres"
     } else{
         $cityErrorMsg.textContent = ""
     }
@@ -402,21 +436,39 @@ const inputCheck = elem => {
 
 }
 
-const handleErrorMsg = contact => {
+const stateInput = () => {
 
-    let $checkFirstName = inputCheck($firstNameErrorMsg)
-    let $checkLastName = inputCheck($lastNameErrorMsg)
-    let $checkAddress = inputCheck($addressErrorMsg)
-    let $checkCity = inputCheck($cityErrorMsg) 
-    let $checkEmail = inputCheck($emailErrorMsg) 
+    let $checkFirstName = inputCheck($firstName)
+    let $checkLastName = inputCheck($lastName)
+    let $checkAddress = inputCheck($address)
+    let $checkCity = inputCheck($city) 
+    let $checkEmail = inputCheck($email)
 
     if ( $checkFirstName && $checkLastName && $checkAddress && $checkCity && $checkEmail) {
+        return false
+    } else {
+        return true
+    }
+
+}
+
+const handleErrorMsg = () => {
+
+    let $checkFirstNameErrorMsg = inputCheck($firstNameErrorMsg)
+    let $checkLastNameErrorMsg = inputCheck($lastNameErrorMsg)
+    let $checkAddressErrorMsg = inputCheck($addressErrorMsg)
+    let $checkCityErrorMsg = inputCheck($cityErrorMsg) 
+    let $checkEmailErrorMsg = inputCheck($emailErrorMsg)  
+
+    if ( $checkFirstNameErrorMsg && $checkLastNameErrorMsg && $checkAddressErrorMsg && $checkCityErrorMsg && $checkEmailErrorMsg) {
         return true
     } else {
         return false
     }
 
 }
+
+
 
 
 // Fetch request to get product items
@@ -436,7 +488,7 @@ fetch("http://localhost:3000/api/products/order", {
 // method for retrieve form details and check contact details correctness
 const cartOrderSubmit = async () => {
 
-    if(handleErrorMsg($contact)){
+    if(stateInput() && handleErrorMsg()){
 
         const $formDetails = await retrieveForm()
 

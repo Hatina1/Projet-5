@@ -1,14 +1,29 @@
 // Section where items will be added dynamically  
 const $items = document.querySelector('#items')
 
-// Number products in cart 
-const $linkCart = document.querySelector('ul > a:nth-child(2) > li')
-const $itemsNumber = JSON.parse(localStorage.getItem("cart")).length
-if (localStorage.hasOwnProperty('cart') && $itemsNumber >= 1 ) {
-    const $cartNumItems = document.createElement("span")
-    $linkCart.appendChild($cartNumItems)
-    $cartNumItems.textContent = `${$itemsNumber}`
-} 
+
+ // Show number of products in cart
+ const $linkCart = document.querySelector('ul > a:nth-child(2) > li')
+
+ const  showItemsQtyInCart = () => {
+
+    const $itemsNumber = JSON.parse(localStorage.getItem("cart")).length 
+ 
+    var span = document.querySelector("span")
+    var classes = span.classList
+    var $checkcartNumItems = classes.contains('itemsQtyInCart')
+
+    if ($checkcartNumItems) {
+        const $cartNumItemsModif = document.querySelector('.itemsQtyInCart')
+        $cartNumItemsModif.textContent = `${$itemsNumber}`
+
+    } else if (localStorage.hasOwnProperty('cart') && $itemsNumber >= 1 ) {
+        const $cartNumItems = document.createElement("span")
+        $cartNumItems.classList.add('itemsQtyInCart')
+        $linkCart.appendChild($cartNumItems)
+        $cartNumItems.textContent = `${$itemsNumber}`
+    } 
+}
 
 // Fetch request to get product items
 const retrieveItemsData = () => fetch("http://localhost:3000/api/products")
@@ -83,3 +98,4 @@ const main = async () => {
 }
 
 main()
+showItemsQtyInCart()
